@@ -6,7 +6,7 @@
  * @sfd: The socket file descriptor. It is both bound and connected.
  * @return: as soon as stdin signals EOF
  */
-void read_write_loop(const int sfd);
+int read_write_loop(const int sfd, char *filename);
 
 #endif
 
