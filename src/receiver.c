@@ -57,8 +57,11 @@ int main(int argc, char *argv[]) {
       //if(sockfd<0){
         //return -1;
         //free(socketAddress);
-    sockfd = create_socket(socketAddress, portNr, NULL, -1);
-    int bound = bind(sockfd, INADDR_ANY, m);
+	for(i=0, i<m, i++){
+        	sockfd = create_socket(socketAddress, i, NULL, -1);
+        	int bound = bind(sockfd, INADDR_ANY, m);
+		
+	}	
     
       }
     }
