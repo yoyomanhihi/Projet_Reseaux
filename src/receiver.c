@@ -60,28 +60,27 @@ int main(int argc, char *argv[]) {
     fd_set *set = (fd_set*) malloc(m*sizeof(fd_set));
     int i;
     for(i=0; i<m; i++){
-      int sock= create_socket(socketAddress,portNr, NULL, -1);
+      int sock= create_socket(socketAddress, portNr, NULL, -1);
       if(sock<0){
         free(socketAddress);
         return -1;
       }
       FD_SET(sock, set);
+    }
+    for(i=0; i<m; i++){
       int errm=select(m+1, set, NULL, NULL, NULL);
       if(errm==-1){
         fprintf(stderr, "select crashes");
         return -1;
       }
-      wait_for_client(set[i]);
+      wait_for_client(errm);
       free(socketAddress);
-      if(sockfd==-1){
-        free(socketAddress);
-        fprintf(stderr, "Could not create a socket!\n");
-      }
       if(read_write_loop(sockfd,filename)!=PKT_OK){
         fprintf(stderr, "Error in loop \n");
       }
     }
     return 0;
+  }
   
   sockfd=create_socket(socketAddress,portNr, NULL, -1);
   if(sockfd<0){
