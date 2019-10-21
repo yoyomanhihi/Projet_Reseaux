@@ -28,12 +28,17 @@ int main(int argc, char *argv[]) {
   int portNr;
   int sockfd;
   int off = 0;
-  opt=getopt(argc,argv,"f:");
+  int m=1;
+  
+  opt=getopt(argc,argv,"o:m:f:");
   switch (opt) {
     case 'f':
-    filename = optarg;
-    off = off+2;
-    break;
+      filename = optarg;
+      off = off+2;
+      break;
+    case 'm':
+      m=atoi(optarg);
+      break;
     default:
     filename=NULL;
     break;
@@ -43,6 +48,14 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Arguments missing, expected:%d, received:%d\n", 2+opt, argc-1 );
     free(socketAddress);
     return -1;
+  }
+  if(m>1){
+    read_fd_set = active_fd_set;
+    int errm=select(m, &read_fd_set, NULL, NULL, NULL);
+    if(errm==-1){
+      fprintf
+      return -1;
+    }
   }
   address =  argv[1+off];
   portNr = atoi(argv[2+off]);
