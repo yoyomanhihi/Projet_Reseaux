@@ -19,6 +19,8 @@
 #include "Headers/read_write_loop.h"
 #include "Headers/wait_for_client.h"
 
+//Ce code a été repris du code du projet de l'année précédente. Les membres du groupe à l'époque étaient Matteo Snellings et moi-même, Simon Kellen.
+
 const char * real_address(const char *address, struct sockaddr_in6 *rval) {
   struct addrinfo hints, *res, *looper;
     int err;
