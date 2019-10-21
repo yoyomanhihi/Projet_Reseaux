@@ -50,6 +50,18 @@ int main(int argc, char *argv[]) {
     return -1;
   }
   if(m>1){
+    //int* sockfd = (int*) malloc(m*sizeof(int));
+    //int i;
+    //for(i=0, i<m, i++){
+      //sockfd[i]=create_socket(socketAddress,portNr, NULL, -1);
+      //if(sockfd<0){
+        //return -1;
+        //free(socketAddress);
+    sockfd = create_socket(socketAddress, portNr, NULL, -1);
+    int bound = bind(sockfd, INADDR_ANY, m);
+    
+      }
+    }
     read_fd_set = active_fd_set;
     int errm=select(m, &read_fd_set, NULL, NULL, NULL);
     if(errm==-1){
