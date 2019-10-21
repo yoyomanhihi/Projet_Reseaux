@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
   int portNr;
   int sockfd;
   int off = 0;
-  int m=1;
+  int m=100;
   
   opt=getopt(argc,argv,"o:m:f:");
   switch (opt) {
@@ -49,36 +49,40 @@ int main(int argc, char *argv[]) {
     free(socketAddress);
     return -1;
   }
-  if(m>1){
-    //int* sockfd = (int*) malloc(m*sizeof(int));
-    //int i;
-    //for(i=0, i<m, i++){
-      //sockfd[i]=create_socket(socketAddress,portNr, NULL, -1);
-      //if(sockfd<0){
-        //return -1;
-        //free(socketAddress);
-	for(i=0, i<m, i++){
-        	sockfd = create_socket(socketAddress, i, NULL, -1);
-        	int bound = bind(sockfd, INADDR_ANY, m);
-		
-	}	
-    
-      }
-    }
-    read_fd_set = active_fd_set;
-    int errm=select(m, &read_fd_set, NULL, NULL, NULL);
-    if(errm==-1){
-      fprintf
-      return -1;
-    }
-  }
   address =  argv[1+off];
   portNr = atoi(argv[2+off]);
-
+  
   const char* errmsg = real_address(address,socketAddress);
   if(errmsg!=NULL){
     fprintf(stderr, "%s\n", errmsg);
   }
+  if(m>1){
+    fd_set *set = (fd_set*) malloc(m*sizeof(fd_set));
+    int i;
+    for(i=0; i<m; i++){
+      int sock= create_socket(socketAddress,portNr, NULL, -1);
+      if(sock<0){
+        free(socketAddress);
+        return -1;
+      }
+      FD_SET(sock, set);
+      int errm=select(m+1, set, NULL, NULL, NULL);
+      if(errm==-1){
+        fprintf(stderr, "select crashes");
+        return -1;
+      }
+      wait_for_client(set[i]);
+      free(socketAddress);
+      if(sockfd==-1){
+        free(socketAddress);
+        fprintf(stderr, "Could not create a socket!\n");
+      }
+      if(read_write_loop(sockfd,filename)!=PKT_OK){
+        fprintf(stderr, "Error in loop \n");
+      }
+    }
+    return 0;
+  
   sockfd=create_socket(socketAddress,portNr, NULL, -1);
   if(sockfd<0){
     return -1;
