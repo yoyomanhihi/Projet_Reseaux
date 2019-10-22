@@ -29,10 +29,9 @@ int main(int argc, char *argv[]) {
   int sockfd;
   int off = 0;
   int m=1;
-  
-  opt=getopt(argc,argv,"o:m:f:");
-  switch (opt) {
-    case 'f':
+  while((opt=getopt(argc,argv,"o:m:"))!=-1){
+    switch (opt) {
+    case 'o':
       filename = optarg;
       off = off+2;
       break;
@@ -41,8 +40,10 @@ int main(int argc, char *argv[]) {
       off+=2;
       break;
     default:
-    filename=NULL;
+      fprintf(stderr, "mauvais argument");
+      return -1;
     break;
+    }
   }
 
   if(argc-off < 3){
@@ -50,13 +51,10 @@ int main(int argc, char *argv[]) {
     free(socketAddress);
     return -1;
   }
+
   address =  argv[1+off];
   portNr = atoi(argv[2+off]);
-  
-  const char* errmsg = real_address(address,socketAddress);
-  if(errmsg!=NULL){
-    fprintf(stderr, "%s\n", errmsg);
-  }
+
   if(m>1){
     fd_set *set = (fd_set*) malloc(m*sizeof(fd_set));
     int i;
@@ -76,13 +74,18 @@ int main(int argc, char *argv[]) {
       }
       wait_for_client(errm);
       free(socketAddress);
-      if(read_write_loop(sockfd,filename)!=PKT_OK){
+      if(read_write_loop(errm, filename)!=PKT_OK){
         fprintf(stderr, "Error in loop \n");
       }
     }
     return 0;
   }
   
+
+  const char* errmsg = real_address(address,socketAddress);
+  if(errmsg!=NULL){
+    fprintf(stderr, "%s\n", errmsg);
+  }
   sockfd=create_socket(socketAddress,portNr, NULL, -1);
   if(sockfd<0){
     return -1;
