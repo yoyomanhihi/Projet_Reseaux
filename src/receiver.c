@@ -29,34 +29,42 @@ int main(int argc, char *argv[]) {
   int sockfd;
   int off = 0;
   int m=100;
+  int cas=0;
   
-  opt=getopt(argc,argv,"o:m:f:");
-  switch (opt) {
-    case 'f':
-      filename = optarg;
-      off = off+2;
-      break;
-    case 'm':
-      m=atoi(optarg);
-      break;
-    default:
-    filename=NULL;
-    break;
+  while(opt=getopt(argc,argv,"o:m:")!=-1){
+    switch (opt) {
+      case 'o':
+        filename = optarg;
+        off = off+2;
+        cas = 1;
+        break;
+      case 'm':
+        m=atoi(optarg);
+        off = off+2;
+        cas = 2;
+        break;
+      default:
+        fprintf(stderr, "Argument invalide, expected o or m");
+        return -1;
+        break;
+    }
   }
+  fprintf(stderr, "mvalue=%d, ovalue=%s\n", m, filename);
 
   if(argc-off < 3){
     fprintf(stderr, "Arguments missing, expected:%d, received:%d\n", 2+opt, argc-1 );
     free(socketAddress);
     return -1;
   }
-  address =  argv[1+off];
-  portNr = atoi(argv[2+off]);
+  address =  argv[argc-2];
+  portNr = atoi(argv[argc-1]);
   
   const char* errmsg = real_address(address,socketAddress);
   if(errmsg!=NULL){
     fprintf(stderr, "%s\n", errmsg);
   }
   if(m>1){
+    printf("m>1");
     fd_set *set = (fd_set*) malloc(m*sizeof(fd_set));
     int i;
     for(i=0; i<m; i++){
@@ -65,17 +73,20 @@ int main(int argc, char *argv[]) {
         free(socketAddress);
         return -1;
       }
+      printf("create");
       FD_SET(sock, set);
     }
     for(i=0; i<m; i++){
       int errm=select(m+1, set, NULL, NULL, NULL);
+      printf("select");
       if(errm==-1){
         fprintf(stderr, "select crashes");
         return -1;
       }
       wait_for_client(errm);
+      printf("wait");
       free(socketAddress);
-      if(read_write_loop(sockfd,filename)!=PKT_OK){
+      if(read_write_loop(errm,filename)!=PKT_OK){
         fprintf(stderr, "Error in loop \n");
       }
     }
