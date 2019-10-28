@@ -27,13 +27,13 @@ int main(int argc, char *argv[]) {
   char* address;
   int portNr;
   int sockfd;
-  int off = 0;
   int m=1;
+  int off=0;
   while((opt=getopt(argc,argv,"o:m:"))!=-1){
     switch (opt) {
     case 'o':
       filename = optarg;
-      off = off+2;
+      off+=2;
       break;
     case 'm':
       m=atoi(optarg);
@@ -52,8 +52,8 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  address =  argv[1+off];
-  portNr = atoi(argv[2+off]);
+  address =  argv[argc-2];
+  portNr = atoi(argv[argc-1]);
 
   if(m>1){
     int opt=1;
@@ -75,8 +75,22 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "Erreur de setsockopt");
       return -1;
     }
+    int on=1;
+    if(socketAddress->sin6_family==AF_INET6){
+      int  r=setsockopt(headsock, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on));
+      if(r<0){
+	fprintf(stderr, "Erreur setsockopt");
+      }
+    }
+    if (bind(headsock, (struct sockaddr *)&address, sizeof(address))<0){   
+        perror("bind failed");   
+        exit(EXIT_FAILURE);   
+    }   
     const char *addr = real_address(address, socketAddress);
-    if(listen(headsock, m) < 0){
+    if(addr==NULL){
+      fprintf(stderr, "Erreur real_adress");
+    }
+    if(wait_for_client(headsock) < 0){
       fprintf(stderr, "Erreur Listen");
       return -1;
     }
@@ -97,7 +111,7 @@ int main(int argc, char *argv[]) {
 	fprintf(stderr, "Erreur select");
 	return -1;
       }
-      if(FD_ISSET(headsock, &set)!=NULL){
+      if(FD_ISSET(headsock, &set)!=0){
 	if((new = accept(headsock, (struct sockaddr *)&address, (socklen_t *)&length))<0){
 	  fprintf(stderr, "Erreur accept");
 	  return -1;
@@ -112,13 +126,16 @@ int main(int argc, char *argv[]) {
       for(i = 0; i<max; i++){
 	int sock_descr = sockets[i];
 	if(FD_ISSET(sock_descr, &set)){
-	    int reading = read_write_loop(sock_descr, stdout);
+	    int reading = read_write_loop(sock_descr, filename);
 	    if(reading == 0){
 	      close(sock_descr);
 	      sockets[i]=0;
 	    }
 	    else{
-	      int reading = read_write_loop(sock_descr, stdout);
+	      int reading = read_write_loop(sock_descr, filename);
+	      if(reading==-1){
+		fprintf(stderr, "erreur reading");
+	      }
 	    }
 	  }
       }
@@ -128,19 +145,7 @@ int main(int argc, char *argv[]) {
     
     
     
-    //while(1==1){
-    //int errm=select(m+1, &set, NULL, NULL, NULL);
-    //if(errm==-1){
-    //fprintf(stderr, "select crashes");
-    //return -1;
-    //}
-    //wait_for_client(errm);
-    //free(socketAddress);
-    //if(read_write_loop(errm, filename)!=PKT_OK){
-    //fprintf(stderr, "Error in loop \n");
-    //}
-    //}
-    //return 0;
+
     }
   
 
