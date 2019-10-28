@@ -56,30 +56,92 @@ int main(int argc, char *argv[]) {
   portNr = atoi(argv[2+off]);
 
   if(m>1){
-    fd_set *set = (fd_set*) malloc(m*sizeof(fd_set));
+    int opt=1;
+    fd_set set;
     int i;
+    int sockets[m];
+    int max;
+    int new;
     for(i=0; i<m; i++){
-      int sock= create_socket(socketAddress, portNr, NULL, -1);
-      if(sock<0){
-        free(socketAddress);
-        return -1;
-      }
-      FD_SET(sock, set);
+      sockets[i]=0;
     }
-    for(i=0; i<m; i++){
-      int errm=select(m+1, set, NULL, NULL, NULL);
-      if(errm==-1){
-        fprintf(stderr, "select crashes");
-        return -1;
-      }
-      wait_for_client(errm);
+    int headsock = create_socket(socketAddress, portNr, NULL, -1);
+    if(headsock<0){
+      return -1;
       free(socketAddress);
-      if(read_write_loop(errm, filename)!=PKT_OK){
-        fprintf(stderr, "Error in loop \n");
-      }
     }
-    return 0;
-  }
+    int listen_everywhere = setsockopt(headsock, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt));
+    if(listen_everywhere<0){
+      fprintf(stderr, "Erreur de setsockopt");
+      return -1;
+    }
+    const char *addr = real_address(address, socketAddress);
+    if(listen(headsock, m) < 0){
+      fprintf(stderr, "Erreur Listen");
+      return -1;
+    }
+    size_t length = sizeof(address);
+    while(1==1){
+      FD_ZERO(&set);
+      FD_SET(headsock, &set);
+      max = headsock;
+      for(i=0; i<m; i++){
+	int sock_descr = sockets[i];
+	if(sock_descr > 0)
+	  FD_SET(sock_descr, &set);
+	if(sock_descr > max)
+	  max = sock_descr;
+      }
+      int act = select(m+1, &set, NULL, NULL, NULL);
+      if(act < 0){
+	fprintf(stderr, "Erreur select");
+	return -1;
+      }
+      if(FD_ISSET(headsock, &set)!=NULL){
+	if((new = accept(headsock, (struct sockaddr *)&address, (socklen_t *)&length))<0){
+	  fprintf(stderr, "Erreur accept");
+	  return -1;
+	}
+	for(i = 0; i<max; i++){
+	  if(sockets[i]==0){
+	    sockets[i] = new;
+	    break;
+	  }
+	}
+      }
+      for(i = 0; i<max; i++){
+	int sock_descr = sockets[i];
+	if(FD_ISSET(sock_descr, &set)){
+	    int reading = read_write_loop(sock_descr, stdout);
+	    if(reading == 0){
+	      close(sock_descr);
+	      sockets[i]=0;
+	    }
+	    else{
+	      int reading = read_write_loop(sock_descr, stdout);
+	    }
+	  }
+      }
+      
+    }
+
+    
+    
+    
+    //while(1==1){
+    //int errm=select(m+1, &set, NULL, NULL, NULL);
+    //if(errm==-1){
+    //fprintf(stderr, "select crashes");
+    //return -1;
+    //}
+    //wait_for_client(errm);
+    //free(socketAddress);
+    //if(read_write_loop(errm, filename)!=PKT_OK){
+    //fprintf(stderr, "Error in loop \n");
+    //}
+    //}
+    //return 0;
+    }
   
 
   const char* errmsg = real_address(address,socketAddress);
