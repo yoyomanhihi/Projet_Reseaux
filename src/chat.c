@@ -30,6 +30,7 @@ const char * real_address(const char *address, struct sockaddr_in6 *rval) {
     memset(rval,0,sizeof(struct sockaddr_in6));
 
     rval->sin6_family = AF_INET6;
+    rval->sin6_addr = in6addr_any;
     hints.ai_family = AF_INET6;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_protocol = 0;
