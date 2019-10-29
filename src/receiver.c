@@ -188,7 +188,24 @@ int read_write_loop(int sockfd, char *filename){
   int printTo = fileno(stdout);
 
   if(filename!=NULL){
-    printTo=open(filename,O_CREAT|O_RDWR | O_TRUNC,S_IRUSR|S_IWUSR);
+    int count = 0;
+    char underscore = '_';
+    char c = count + '0';
+    char *new=(char *) malloc(2);
+    new[0]=underscore;
+    new[1]=c;
+    char* newName = (char *)malloc(100);
+    int taillef=0;
+    char current=filename[0];
+    while(current!='\0'){
+      taillef++;
+      current=filename[taillef];
+    }
+    memcpy(newName, filename, taillef);
+    strcat(newName, new);
+    printTo=open(newName,O_CREAT|O_RDWR | O_TRUNC,S_IRUSR|S_IWUSR);
+    count++;
+    
     if(printTo < 0){
 
       free(buf);
